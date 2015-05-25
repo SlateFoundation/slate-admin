@@ -1,21 +1,17 @@
-/*jslint browser: true, undef: true*//*global Ext*/
+/* jshint undef: true, unused: true, browser: true, quotmark: single, curly: true */
+/* global Ext */
 
 /**
  * @abstract
  * An abstract class for singletons that facilitates communication with backend services
- * 
+ *
  * TODO:
  * - add events for all lifecycle events: beforerequest, request, beforexception, exception, unauthorized
- * - does the touch version use Ext.Ajax or parent.request?
- * - pass through request options like touch version does
  */
 Ext.define('Jarvus.util.AbstractAPI', {
     extend: 'Ext.data.Connection',
-    requires: ['Ext.util.Cookies', 'Ext.Ajax',
-               'Ext.Array'
-    ],
-    uses: [
-        'Jarvus.util.APIDomain'
+    requires: [
+        'Ext.Array'
     ],
 
     config: {
@@ -24,30 +20,49 @@ Ext.define('Jarvus.util.AbstractAPI', {
          * A hostname to prefix URLs with, or null to leave paths domain-relative
          */
         hostname: null,
-        
+
         /**
          * @cfg {Boolean}
          * True to use HTTPS when prefixing hostname. Only used if {@link #cfg-hostname} is set
          */
-        useSSL: false,
+        useSSL: null,
 
-        // @inheritdoc
+        /**
+         * @cfg {Boolean}
+         * Default value of withCredentials option to use with all XHR calls
+         */
         withCredentials: true
     },
 
-    //@private
-    buildUrl: function(path) {
-        var hostname = this.getHostname();
-        return hostname ? (this.getUseSSL() ? 'https://' : 'http://')+hostname+path : path;
+    /**
+     * @protected
+     * @template
+     */
+    buildUrl: function(path, options) {
+        var me = this,
+            hostname = me.getHostname(),
+            useSSL = me.getUseSSL();
+
+        if (useSSL === null) {
+            useSSL = location.protocol == 'https:';
+        }
+
+        return hostname ? (useSSL ? 'https://' : 'http://') + hostname + path : path;
     },
 
-    //@private
-    buildHeaders: function(headers) {
+    /**
+     * @protected
+     * @template
+     */
+    buildHeaders: function(headers, options) {
         return headers;
     },
 
-    //@private
-    buildParams: function(params) {
+    /**
+     * @protected
+     * @template
+     */
+    buildParams: function(params, options) {
         return params || null;
     },
 
@@ -58,16 +73,16 @@ Ext.define('Jarvus.util.AbstractAPI', {
     request: function(options) {
         var me = this;
 
-        return Ext.Ajax.request(Ext.applyIf({
-            url: me.buildUrl(options.url),
-            withCredentials: true,
-            params: me.buildParams(options.params),
-            headers: me.buildHeaders(options.headers),
-            timeout: options.timeout || 30000,
+        return this.callParent([Ext.applyIf({
+            url: options.url ? me.buildUrl(options.url, options) : null,
+            headers: me.buildHeaders(options.headers || {}, options),
+            params: me.buildParams(options.params || {}, options),
             success: function(response) {
 
                 if (options.autoDecode !== false && response.getResponseHeader('Content-Type') == 'application/json') {
                     response.data = Ext.decode(response.responseText, true);
+
+                    me.fireEvent('responsedecoded', response.data || {}, true, response);
                 }
 
                 //Calling the callback function sending the decoded data
@@ -76,76 +91,24 @@ Ext.define('Jarvus.util.AbstractAPI', {
             },
             failure: function(response) {
 
-                if (options.autoDecode !== false && response.getResponseHeader('Content-Type') == 'application/json') {
+                if (options.autoDecode !== false && response.status > 0 && response.getResponseHeader('Content-Type') == 'application/json') {
                     response.data = Ext.decode(response.responseText, true);
+
+                    me.fireEvent('responsedecoded', response.data || {}, false, response);
+                }
+
+                if (response.aborted) {
+                    Ext.callback(options.abort, options.scope, [response]);
+                    return;
                 }
 
                 if (options.failure && options.failureStatusCodes && Ext.Array.contains(options.failureStatusCodes, response.status)) {
                     Ext.callback(options.failure, options.scope, [response]);
                 } else if (options.exception) {
                     Ext.callback(options.exception, options.scope, [response]);
-                } else if (response.aborted === true) {
-                    Ext.callback(options.abort, options.scope, [response]);
-                } else if (response.status == 401 || response.statusText.indexOf('Unauthorized') !== -1) {
-
-                    /*
-                    We seem to always get the same session id, so we can't automatically try again once the user logs in
-                    var oldSessionID = Ext.util.Cookies.get('s');
-                     */
-
-                    Ext.override(Ext.Msg, {
-                        hide: function () {
-                            var me = this,
-                                hideManually = me.cfg ? me.cfg.hideManually : false;
-
-                            if (!hideManually) {
-                                me.callParent(arguments);
-                            }
-                        }
-                    });
-
-                    var msg = Ext.Msg.show({
-                        hideManually: true,
-                        title: 'Login Required',
-                        msg: "You've either logged out or your has session expired. Please login and try again.",
-                        buttonText: {
-                            'yes': 'Login',
-                            'no': 'Try Again',
-                            'cancel': 'Cancel'
-                        },
-                        scope: msg,
-                        fn: function (btn) {
-                            if (btn === 'yes') {
-                                // login
-                                var loginWindow = window.open('/login', 'emergence-login');
-                                loginWindow.focus();
-                                return;
-                            } else if (btn === 'no') {
-                                // try again
-                                me.request(options);
-                            }
-
-                            msg.cfg.hideManually = false;
-                            msg.hide();
-                        }
-                    });
-
-                    /*
-                    if (oldSessionID !== null) {
-                        var cookieCheckInterval = window.setInterval(function() {
-                            console.log(oldSessionID);
-                            console.warn(Ext.util.Cookies.get('s'));
-                            if (Ext.util.Cookies.get('s') != oldSessionID) {
-                                alert('new login');
-                                debugger;
-                                window.clearInterval(cookieCheckInterval);
-                            }
-                        }, 100);
-                    }
-                    */
                 } else {
-                    Ext.Msg.confirm('An error occurred', 'There was an error trying to reach the server. Do you want to try again?', function (btn) {
-                        if (btn === 'yes') {
+                    Ext.Msg.confirm('An error occurred', 'There was an error trying to reach the server. Do you want to try again?', function(btnId) {
+                        if (btnId === 'yes') {
                             me.request(options);
                         }
                     });
@@ -153,6 +116,6 @@ Ext.define('Jarvus.util.AbstractAPI', {
 
             },
             scope: options.scope
-        }, options));
+        }, options)]);
     }
 });
