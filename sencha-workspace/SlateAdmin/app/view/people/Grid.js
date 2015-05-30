@@ -17,7 +17,7 @@ Ext.define('SlateAdmin.view.people.Grid', {
 
     // grid config
     store: 'people.People',
-    columnLines: true,
+    columnLines: false,
     viewConfig: {
         emptyText: 'Search or select a group on the left to find people',
         deferEmptyText: false

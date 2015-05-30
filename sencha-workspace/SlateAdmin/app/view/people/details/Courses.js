@@ -35,6 +35,7 @@ Ext.define('SlateAdmin.view.people.details.Courses', {
     items: {
         xtype: 'grid',
         border: false,
+        columnLines: false,
         viewConfig: {
             emptyText: 'No courses for selected term'
         },
