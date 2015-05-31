@@ -1,9 +1,10 @@
-/*jslint browser: true, undef: true *//*global Ext*/
+/*jslint browser: true, undef: true *//*global Ext, SlateAdmin*/
 Ext.define('SlateAdmin.Application', {
     extend: 'Ext.app.Application',
     requires: [
         'SlateAdmin.API',
-        
+    
+        'Jarvus.util.APIDialogs',
         // Jarvus enhancements
 //        'Jarvus.ext.override.grid.column.ActionEvents', // TODO: replace with jarvus-ext-actionevents package
 //        'Jarvus.ext.override.grid.column.ActionGlyphs', // TODO: replace with jarvus-ext-glyphs package
@@ -62,7 +63,7 @@ Ext.define('SlateAdmin.Application', {
         }));
 
         if (pageParams.apiHost) {
-            SlateAdmin.API.setHostname(pageParams.apiHost);
+            SlateAdmin.API.setHost(pageParams.apiHost);
         }
     },
 

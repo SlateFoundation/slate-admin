@@ -6,7 +6,8 @@
  * An abstract class for singletons that facilitates communication with backend services
  *
  * TODO:
- * - add events for all lifecycle events: beforerequest, request, beforexception, exception, unauthorized
+ * - figure out how to suppress callback when retry is happening
+ * - document fired events
  */
 Ext.define('Jarvus.util.AbstractAPI', {
     extend: 'Ext.data.Connection',
@@ -17,13 +18,13 @@ Ext.define('Jarvus.util.AbstractAPI', {
     config: {
         /**
          * @cfg {String/null}
-         * A hostname to prefix URLs with, or null to leave paths domain-relative
+         * A host to prefix URLs with, or null to leave paths domain-relative
          */
-        hostname: null,
+        host: null,
 
         /**
          * @cfg {Boolean}
-         * True to use HTTPS when prefixing hostname. Only used if {@link #cfg-hostname} is set
+         * True to use HTTPS when prefixing host. Only used if {@link #cfg-host} is set
          */
         useSSL: null,
 
@@ -40,14 +41,14 @@ Ext.define('Jarvus.util.AbstractAPI', {
      */
     buildUrl: function(path, options) {
         var me = this,
-            hostname = me.getHostname(),
+            host = me.getHost(),
             useSSL = me.getUseSSL();
 
         if (useSSL === null) {
             useSSL = location.protocol == 'https:';
         }
 
-        return hostname ? (useSSL ? 'https://' : 'http://') + hostname + path : path;
+        return host ? (useSSL ? 'https://' : 'http://') + host + path : path;
     },
 
     /**
@@ -71,49 +72,45 @@ Ext.define('Jarvus.util.AbstractAPI', {
      * @inheritdoc
      */
     request: function(options) {
-        var me = this;
+        var me = this,
+            request;
 
-        return this.callParent([Ext.applyIf({
+        return request = this.callParent([Ext.applyIf({
+            originalOptions: options,
             url: options.url ? me.buildUrl(options.url, options) : null,
             headers: me.buildHeaders(options.headers || {}, options),
             params: me.buildParams(options.params || {}, options),
-            success: function(response) {
+            success: function(response, ajaxOptions) {
 
                 if (options.autoDecode !== false && response.getResponseHeader('Content-Type') == 'application/json') {
                     response.data = Ext.decode(response.responseText, true);
 
-                    me.fireEvent('responsedecoded', response.data || {}, true, response);
+                    me.fireEvent('responsedecode', me, response.data || {}, true, response, request, ajaxOptions);
                 }
 
-                //Calling the callback function sending the decoded data
-                Ext.callback(options.success, options.scope, [response]);
-
+                if (false !== me.fireEvent('beforesuccess', me, response, request, ajaxOptions)) {
+                    Ext.callback(options.success, options.scope, [response, ajaxOptions, request]);
+                }
             },
-            failure: function(response) {
+            failure: function(response, ajaxOptions) {
 
                 if (options.autoDecode !== false && response.status > 0 && response.getResponseHeader('Content-Type') == 'application/json') {
                     response.data = Ext.decode(response.responseText, true);
 
-                    me.fireEvent('responsedecoded', response.data || {}, false, response);
+                    me.fireEvent('responsedecode', me, response.data || {}, false, response, request, ajaxOptions);
                 }
-
-                if (response.aborted) {
-                    Ext.callback(options.abort, options.scope, [response]);
-                    return;
+debugger;
+                if (false !== me.fireEvent('beforefailure', me, response, request, ajaxOptions)) {
+                    Ext.callback(options.failure, options.scope, [response, ajaxOptions, request]);
                 }
-
-                if (options.failure && options.failureStatusCodes && Ext.Array.contains(options.failureStatusCodes, response.status)) {
-                    Ext.callback(options.failure, options.scope, [response]);
-                } else if (options.exception) {
-                    Ext.callback(options.exception, options.scope, [response]);
-                } else {
-                    Ext.Msg.confirm('An error occurred', 'There was an error trying to reach the server. Do you want to try again?', function(btnId) {
-                        if (btnId === 'yes') {
-                            me.request(options);
-                        }
-                    });
+            },
+            callback: function(ajaxOptions, success, response) {
+                debugger;
+                var ret = me.fireEvent('beforecallback', me, success, response, request, ajaxOptions);
+                debugger;
+                if (false !== ret) {
+                    Ext.callback(options.callback, options.scope, [ajaxOptions, success, response, request]);
                 }
-
             },
             scope: options.scope
         }, options)]);
