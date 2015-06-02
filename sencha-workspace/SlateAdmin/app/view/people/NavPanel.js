@@ -10,8 +10,16 @@ Ext.define('SlateAdmin.view.people.NavPanel', {
 
     title: 'People',
     autoScroll: true,
-    bodyPadding: 0,
 
+    config: {
+        bodyPadding: 0 
+    },
+
+    setBodyPadding: function() {
+        // try to figure out why bodypadding is being set to 10... 
+        // debugger;
+    },
+    
     dockedItems: [{
         dock: 'top',
 
@@ -35,7 +43,7 @@ Ext.define('SlateAdmin.view.people.NavPanel', {
     },{
         xtype: 'treepanel',
         itemId: 'groups',
-        border: '1 0',
+        border: 0,
 
         // treepanel config
         store: 'people.GroupsTree',
