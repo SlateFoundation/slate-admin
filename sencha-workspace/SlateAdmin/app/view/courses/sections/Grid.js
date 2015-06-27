@@ -10,7 +10,7 @@ Ext.define('SlateAdmin.view.courses.sections.Grid', {
 
     // grid config
     store: 'courses.SectionsResult',
-    columnLines: true,
+
     viewConfig: {
         emptyText: '<div class="emptyText">No course sections found</div>',
         deferEmptyText: true
@@ -24,9 +24,11 @@ Ext.define('SlateAdmin.view.courses.sections.Grid', {
             '{% values.course = coursesCache && coursesCache.getById(values.groupValue) %}',
             '<tpl if="course">',
                 '<tpl for="course.getData()">',
-                    '<span class="course-sections">{[parent.children.length]} &times; </span>',
-                    '<span class="course-title">{Title}</span>',
-                    '<span class="course-code" style="float: right">{Code}</span>',
+                    '<span class="course-title">',
+                        '{Title} ',
+                        '<tpl if="parent.children.length &gt; 1"><small class="muted">({[parent.children.length]})</small></tpl>',
+                    '</span>',
+                    '<small class="course-code pull-right">{Code}</span>',
                 '</tpl>',
             '<tpl else>',
                 'Course #{groupValue}',

@@ -1,4 +1,7 @@
 /*jslint browser: true, undef: true *//*global Ext*/
+/**
+ * Advanced Search Form
+ */
 Ext.define('SlateAdmin.view.people.AdvancedSearchForm', {
     extend: 'Ext.form.Panel',
     xtype: 'people-advancedsearchform',
@@ -13,6 +16,7 @@ Ext.define('SlateAdmin.view.people.AdvancedSearchForm', {
     items: [{
         xtype: 'fieldset',
         title: 'Advanced Search',
+        cls: 'navpanel-search-criteria',
         collapsible: true,
         collapsed: true,
         // stateful: true, TODO fix collapsing state bug
@@ -20,11 +24,9 @@ Ext.define('SlateAdmin.view.people.AdvancedSearchForm', {
         defaults: {
             anchor: '100%',
             xtype: 'textfield',
-            labelWidth: 45,
+            labelWidth: 65,
             labelSeparator: '',
             labelAlign: 'right',
-            labelStyle: 'font-size: small; color: #666',
-            labelPad: 10,
             autoSelect: false // only for combo boxes
         },
         items: [{
@@ -56,7 +58,7 @@ Ext.define('SlateAdmin.view.people.AdvancedSearchForm', {
                         rootProperty: 'data'
                     }
                 }
-            } 
+            }
         },{
             xtype: 'combo',
             name: 'gender',
@@ -93,7 +95,7 @@ Ext.define('SlateAdmin.view.people.AdvancedSearchForm', {
                         rootProperty: 'data'
                     }
                 }
-            }        
+            }
         },{
             xtype: 'combo',
             name: 'course',
@@ -117,7 +119,7 @@ Ext.define('SlateAdmin.view.people.AdvancedSearchForm', {
         },{
             xtype: 'button',
             anchor: false,
-            margin: '0 0 0 55',
+            margin: '0 0 0 70',
             action: 'search',
             text: 'Search',
             glyph: 0xf002 // fa-search
