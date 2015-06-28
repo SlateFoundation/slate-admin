@@ -7,9 +7,6 @@ Ext.define('SlateAdmin.Application', {
     requires: [
         'SlateAdmin.API',
 
-        // Jarvus enhancements
-        'Jarvus.ext.override.data.RequireLoadedStores',
-
         // framework features
         'Ext.state.LocalStorageProvider'
     ],
