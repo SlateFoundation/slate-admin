@@ -1,11 +1,9 @@
 /*jslint browser: true, undef: true *//*global Ext*/
-//TODO:  move to view.settings wih other settings managers
 Ext.define('SlateAdmin.view.groups.Manager', {
     extend: 'Ext.tree.Panel',
     xtype: 'groups-manager',
     requires: [
-        'Ext.grid.plugin.CellEditing',
-        'Jarvus.ext.actionevents.override.grid.column.ActionEvents'
+        'Ext.grid.plugin.CellEditing'
     ],
 
     useArrows: true,
@@ -43,27 +41,6 @@ Ext.define('SlateAdmin.view.groups.Manager', {
                 ]
             }
         }
-    },{
-        xtype: 'actioncolumn',
-        dataIndex: 'Class',
-        width: 54,
-        items: [
-            {
-                action: 'browsemembers',
-                icon: 'http://www.goodsync.com/images/icons/C_Dis_Cir.png',
-                tooltip: 'Browse Members'
-            },
-            {
-                action: 'createsubgroup',
-                icon: 'http://www.goodsync.com/images/icons/C_Dis_Cir.png',
-                tooltip: 'Create Subgroup'
-            },
-            {
-                action: 'deletegroup',
-                icon: 'http://www.goodsync.com/images/icons/C_Dis_Cir.png',
-                tooltip: 'Delete Group'
-            }
-        ]
     }],
     bbar: [{
         xtype: 'button',

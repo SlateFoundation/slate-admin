@@ -24,7 +24,6 @@ Ext.define('SlateAdmin.controller.People', {
 
     routes: {
         'people': 'showPeople',
-        'people/all': 'showResults',
         'people/lookup/:person': {
             action: 'showPerson',
             conditions: {
@@ -153,8 +152,7 @@ Ext.define('SlateAdmin.controller.People', {
                 click: me.onSearchClick
             },
             'people-navpanel #groups': {
-                //select: me.onGroupSelect
-                itemclick: me.onGroupSelect
+                select: me.onGroupSelect
             },
             'people-grid': {
                 select: { fn: me.onPersonSelect, buffer: 10 },
@@ -337,7 +335,7 @@ Ext.define('SlateAdmin.controller.People', {
                 }
 
                 me.selectPerson(person, function() {
-                    ExtHistory.resumeState(false);
+                    ExtHistory.resumeState();
                     Ext.resumeLayouts(true);
                 });
             });
@@ -849,7 +847,6 @@ Ext.define('SlateAdmin.controller.People', {
             searchField = me.getSearchField(),
             form = me.getAdvancedSearchForm().getForm(),
             selectedGroups = me.getGroupsTree().getSelectionModel().getSelection(),
-            rootGroupSelected = false,
             fields = form.getFields().items,
             fieldsLen = fields.length, fieldIndex = 0, field, fieldName, fieldValue,
             query = searchField.getValue(),
@@ -875,12 +872,7 @@ Ext.define('SlateAdmin.controller.People', {
         // add selected group
         fieldNames.push('group');
         if (selectedGroups.length > 0 && (fieldValue = selectedGroups[0].get('Handle'))) {
-            if (fieldValue !== 'slate-internal-people-root-node') {
-                // push group if it is not the root node
-                queuedTerms.push('group:'+fieldValue);
-            } else {
-                rootGroupSelected = true;
-            }
+            queuedTerms.push('group:'+fieldValue);
         }
 
         // scan query for terms that don't match a field
@@ -894,13 +886,6 @@ Ext.define('SlateAdmin.controller.People', {
 
         // build a query string that combines the unmatched terms with field values
         query = Ext.String.trim(Ext.Array.merge(unmatchedTerms, queuedTerms).join(' '));
-
-        if (!query && rootGroupSelected) {
-            // if there's no query and root group is selected, redirect to people/all
-            Ext.util.History.add('people/all');
-            return;
-        }
-
         searchField.setValue(query);
 
         if (execute) {

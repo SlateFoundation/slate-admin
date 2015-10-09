@@ -42,7 +42,6 @@ Ext.define('SlateAdmin.model.person.Group', {
     },{
         name: 'About',
         type: 'string',
-        persist: false,
         allowNull: true
     },{
         name: 'Population',

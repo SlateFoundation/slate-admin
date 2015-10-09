@@ -1,5 +1,4 @@
 /*jslint browser: true, undef: true *//*global Ext*/
-//TODO: perhaps this should be in model/course directory with Course, Department, and Section? (also corresponding Emergence classes)
 Ext.define('SlateAdmin.model.Term', {
     extend: 'Ext.data.Model',
     requires: [
@@ -18,7 +17,7 @@ Ext.define('SlateAdmin.model.Term', {
         {
             name: "Class",
             type: "string",
-            defaultValue: "Slate\\Term"
+            defaultValue: "Term"
         },
         {
             name: "Created",
@@ -77,24 +76,6 @@ Ext.define('SlateAdmin.model.Term', {
             name: "Right",
             type: "int",
             allowNull: true
-        },
-        {
-            name: 'titlesPath',
-            type: 'string',
-            persist: false
-        },
-        {
-            name: 'leaf',
-            type: 'boolean',
-            persist: false,
-            depends: ['Left', 'Right'],
-            convert: function(v, r) {
-                if (typeof v == 'boolean') {
-                    return v;
-                } else {
-                    return r.get('Left') == r.get('Right') - 1;
-                }
-            }
         }
     ],
 
