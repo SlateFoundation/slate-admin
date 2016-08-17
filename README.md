@@ -1,5 +1,5 @@
 # SlateAdmin
-This [Ext JS 5.1](http://docs.sencha.com/extjs/5.1/) app provides a user interface for administrators of Slate.
+This [Ext JS 6.0](http://docs.sencha.com/extjs/6.0/) app provides a user interface for administrators of Slate.
 
 ## Getting started with client-side UI application development
 1. [Install latest 6.x Sencha CMD](https://www.sencha.com/products/extjs/cmd-download/)
