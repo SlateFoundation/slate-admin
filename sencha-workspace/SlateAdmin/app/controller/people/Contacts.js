@@ -249,24 +249,7 @@ Ext.define('SlateAdmin.controller.people.Contacts', {
 
         if (editedRecord.dirty && editedRecord.isValid()) {
             editedRecord.save({
-                callback: function(savedRecord, operation, success) {
-
-                    if (success) {
-                        // UPGRADE: manual call to commit shouldn't be necessary, remove when this bug is fixed: http://www.sencha.com/forum/showthread.php?273093
-                        editedRecord.commit();
-                    } else {
-                        // render any server-side validation errors
-                        Ext.Array.each(editedRecord.getProxy().getReader().rawData.failed || [], function(result) {
-                            gridView.markRowInvalid(editedRecord, result.validationErrors);
-                        });
-                    }
-
-                    // <debug>
-                    if (!Ext.getVersion().match('4.2.2.1144')) {
-                        console.warn('This hack above has not been tested with this version of ExtJS and may no longer be necessary'); // eslint-disable-line no-console
-                    }
-                    // </debug>
-
+                callback: function() {
                     // ensure there is a blank row for creating another record
                     me.injectBlankRelationshipRecord();
                 }
@@ -301,9 +284,6 @@ Ext.define('SlateAdmin.controller.people.Contacts', {
         record.set('Class', record.get('Class') === 'Emergence\\People\\Relationship' ? 'Emergence\\People\\GuardianRelationship' : 'Emergence\\People\\Relationship');
         record.save({
             callback: function() {
-                // UPGRADE: manual call to commit shouldn't be necessary, remove when this bug is fixed: http://www.sencha.com/forum/showthread.php?273093
-                record.commit();
-
                 grid.setLoading(false);
             }
         });
