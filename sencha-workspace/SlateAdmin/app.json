@@ -74,7 +74,19 @@
          * root namespace, change this to "". Doing so would change the mapping of
          * "SlateAdmin.view.Foo" to "sass/src/SlateAdmin/view/Foo.scss".
          */
-        "namespace": "SlateAdmin"
+        "namespace": "SlateAdmin",
+
+        "etc": [
+            "sass/etc/all.scss"
+        ],
+
+        "var": [
+            "sass/var"
+        ],
+
+        "src": [
+            "sass/src"
+        ]
     },
 
     /**
@@ -293,6 +305,7 @@
      * Extra resources to be copied along when build
      */
     "resources": [
+        "${app.dir}/resources/"
     ],
 
     /**
