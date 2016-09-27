@@ -1,7 +1,7 @@
 /*jslint browser: true, undef: true, laxbreak: true *//*global Ext*/
-Ext.define('SlateAdmin.view.progress.narratives.Printer', {
+Ext.define('SlateAdmin.view.progress.narratives.Mailer', {
     extend: 'Ext.Container',
-    xtype: 'progress-narratives-printer',
+    xtype: 'progress-narratives-mailer',
 
     requires: [
         'Ext.layout.container.VBox',
@@ -9,10 +9,11 @@ Ext.define('SlateAdmin.view.progress.narratives.Printer', {
         'Ext.form.Panel',
         'Ext.form.FieldSet',
         'Ext.form.field.ComboBox',
+        'Ext.form.CheckboxGroup',
         'Ext.util.Cookies'
     ],
 
-    componentCls: 'progress-narratives-printer',
+    componentCls: 'progress-narratives-mailer',
 
     layout: {
         type: 'vbox',
@@ -28,36 +29,19 @@ Ext.define('SlateAdmin.view.progress.narratives.Printer', {
             xtype: 'container',
             layout: {
                 type: 'hbox',
-                align: 'middle'
+                pack: 'center'
             },
             defaults: {
                 margin: '0 8px 4px 8px'
             },
             items: [{
-                xtype: 'tbfill'
-            },{
                 xtype: 'button',
-                text: 'Preview',
-                action: 'preview'
-            },{
-                xtype: 'button',
-                text: 'Print to PDF',
-                action: 'print-pdf'
-            },{
-                xtype: 'button',
-                text: 'Print via Browser',
-                action: 'print-browser'
-            },{
-                xtype: 'button',
-                text: 'Email to Parents',
-                action: 'email',
-                disabled: true
+                text: 'Search',
+                action: 'search'
             },{
                 xtype: 'button',
                 text: 'Clear Filters',
                 action: 'clear-filters'
-            },{
-                xtype: 'tbfill'
             }]
         }],
         items: [{
@@ -67,22 +51,22 @@ Ext.define('SlateAdmin.view.progress.narratives.Printer', {
             padding: 10,
             defaultType: 'combobox',
             defaults: {
-                flex: 1,
+                flex: 2,
                 labelAlign: 'right',
                 labelWidth: 60,
-                forceSelection: false,
+                forceSelection: true,
                 allowBlank: true,
                 valueField: 'ID'
             },
             items: [{
                 name: 'termID',
+                itemId: 'termCombo',
                 fieldLabel: 'Term',
                 emptyText: 'Current Term',
+                editable: false,
                 displayField: 'Title',
-                itemId: 'termSelector',
-                valueField: 'ID',
                 queryMode: 'local',
-                store: 'Terms'
+                store: {xclass: 'SlateAdmin.store.Terms'}
             },{
                 name: 'advisorID',
                 fieldLabel: 'Advisor',
@@ -91,7 +75,7 @@ Ext.define('SlateAdmin.view.progress.narratives.Printer', {
                 queryMode: 'local',
                 typeAhead: true,
                 allowBlank: true,
-                store: 'people.Advisors'
+                store: {xclass: 'SlateAdmin.store.people.Advisors'}
             },{
                 name: 'studentID',
                 itemId: 'studentCombo',
@@ -128,17 +112,56 @@ Ext.define('SlateAdmin.view.progress.narratives.Printer', {
                         limitParam: false
                     }
                 }
+            },{
+                xtype: 'checkboxgroup',
+                fieldLabel: 'Recipients',
+                flex: 3,
+                margin: 0,
+                labelWidth: 80,
+                items: [{
+                    boxLabel: 'Advisor',
+                    inputValue: 'Advisor',
+                    checked: true,
+                    name: 'Recipients'
+                },{
+                    boxLabel: 'Parents',
+                    checked: true,
+                    inputValue: 'Parents',
+                    name: 'Recipients'
+                }]
             }]
         }]
     },{
-        xtype: 'component',
-        itemId: 'previewBox',
-        cls: 'print-preview',
+        xtype: 'container',
+        layout: {
+            type: 'hbox',
+            align: 'stretch'
+        },
         flex: 1,
-        disabled: true,
-        renderTpl: '<iframe width="100%" height="100%"></iframe>',
-        renderSelectors: {
-            iframeEl: 'iframe'
-        }
+        items: [{
+            xtype: 'progress-narratives-mailergrid',
+            width: 450
+        },{
+            xtype: 'component',
+            itemId: 'previewBox',
+            cls: 'email-preview',
+            flex: 1,
+            disabled: true,
+            renderTpl: '<iframe width="100%" height="100%"></iframe>',
+            renderSelectors: {
+                iframeEl: 'iframe'
+            },
+            listeners: {
+                afterrender: {
+                    fn: function (previewBox) {
+                        this.mon(previewBox.iframeEl, 'load', function () {
+                            this.fireEvent('previewload', this, previewBox);
+                            previewBox.setLoading(false);
+                        }, this);
+                    },
+                    delay: 10
+                }
+            }
+        }]
     }]
 });
