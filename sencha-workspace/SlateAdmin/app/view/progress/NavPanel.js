@@ -1,8 +1,8 @@
-/*jslint browser: true, undef: true *//*global Ext*/
 Ext.define('SlateAdmin.view.progress.NavPanel', {
     extend: 'SlateAdmin.view.LinksNavPanel',
     xtype: 'progress-navpanel',
- //TODO: Delete extra link when nav panel arrow collapse is fixed
+
+
     title: 'Student Progress',
     data: true,
 
@@ -11,46 +11,34 @@ Ext.define('SlateAdmin.view.progress.NavPanel', {
             return data;
         }
 
-        return location.search.match(/\Wenablesbg(\W|$)/) ? [
+        return [
             {
-                href: '#progress/standards', text: 'Standards Based Grades',
-                children: [{
-                    href: '#progress/standards/worksheets', text: 'Manage Worksheets'
-                },{
-                    href: '#progress/standards/printing', text: 'Search & Print'
-                }]
-            }, {
-                href: '#progress/standards/worksheets', text: 'Manage Worksheets'
-            },{
-                href: '#progress/standards/printing', text: 'Search & Print'
-            }, {
-                href: '#progress/narratives', text: 'Narrative Reports',
-                children: [{
-                    href: '#progress/narratives/printing', text: 'Search & Print'
-                },{
-                    href: '#progress/narratives/email', text: 'Email'
-                }]
-            }, {
-                href: '#progress/narratives/printing', text: 'Search & Print'
-            }, {
-                href: '#progress/interims', text: 'Interim Reports',
-                children: [{
-                    href: '#progress/interims/printing', text: 'Search & Print'
-                },{
-                    href: '#progress/interims/email', text: 'Email'
-                }]
-            }, {
-                href: '#progress/interims/printing', text: 'Search & Print'
-            },{
-                href: '#progress/interims/email', text: 'Email'
-            }
-        ] : [
+                text: 'Section Interim Reports',
+                href: '#progress/interims',
+                children: [
+                    {
+                        text: 'Search & Print',
+                        href: '#progress/interims/print'
+                    }
+                    // {
+                    //     text: 'Email',
+                    //     href: '#progress/interims/email'
+                    // }
+                ]
+            },
             {
-                href: '#progress/narratives', text: 'Narrative Reports'
-            }, {
-                href: '#progress/narratives/printing', text: '↳ Search & Print'
-            },{
-                href: '#progress/narratives/email', text: 'Email'
+                text: 'Section Term Reports',
+                href: '#progress/narratives',
+                children: [
+                    {
+                        text: 'Search & Print',
+                        href: '#progress/narratives/print'
+                    }
+                    // {
+                    //     text: 'Email',
+                    //     href: '#progress/narratives/email'
+                    // }
+                ]
             }
         ];
     }
