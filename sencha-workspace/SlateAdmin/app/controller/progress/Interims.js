@@ -45,6 +45,7 @@ Ext.define('SlateAdmin.controller.progress.Interims', {
             change: 'onMyClassesOnlyCheckboxChange'
         },
         termSelector: {
+            beforeselect: 'onBeforeTermSelect',
             change: 'onTermChange'
         },
         sectionsGrid: {
@@ -86,6 +87,9 @@ Ext.define('SlateAdmin.controller.progress.Interims', {
 
     listen: {
         store: {
+            '#progress.interims.Sections': {
+                load: 'onSectionsStoreLoad'
+            },
             '#progress.interims.Students': {
                 load: 'onStudentsStoreLoad'
             }
@@ -119,8 +123,55 @@ Ext.define('SlateAdmin.controller.progress.Interims', {
         this.syncSections();
     },
 
+    onBeforeTermSelect: function(termSelector, term) {
+        var me = this,
+            editorForm = me.getEditorForm(),
+            loadedReport = editorForm.getRecord();
+
+        if (loadedReport && editorForm.isDirty()) {
+            Ext.Msg.confirm('Unsaved Changes', 'You have unsaved changes to this report.<br/><br/>Do you want to continue without saving them?', function (btn) {
+                if (btn != 'yes') {
+                    return;
+                }
+
+                editorForm.reset();
+                termSelector.select(term);
+            });
+
+            return false;
+        }
+    },
+
     onTermChange: function () {
         this.syncSections();
+    },
+
+    onSectionsStoreLoad: function() {
+        var me = this,
+            sectionsGrid = me.getSectionsGrid(),
+            section = sectionsGrid.getSelection()[0],
+            studentsGrid = me.getStudentsGrid(),
+            studentsStore = studentsGrid.getStore(),
+            reportsStore = me.getProgressInterimsReportsStore(),
+            editorForm = me.getEditorForm();
+
+        // reselect section if already selected
+        if (section) {
+            sectionsGrid.setSelection(null);
+            sectionsGrid.setSelection(section);
+        } else {
+            // reset stores
+            studentsStore.removeAll();
+            studentsGrid.getView().clearEmptyEl(); // PRIVATE: clearEmptyEl to remove empty text
+            reportsStore.removeAll();
+
+            // reset form
+            editorForm.disable();
+            editorForm.reset(true);
+
+            // reset students list
+            studentsGrid.disable();
+        }
     },
 
     onBeforeSectionSelect: function(sectionsSelModel, section) {
