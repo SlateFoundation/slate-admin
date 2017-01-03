@@ -199,7 +199,7 @@ Ext.define('SlateAdmin.controller.people.Contacts', {
             columnManager = context.grid.getColumnManager(),
             invalid = false,
             relatedPeopleStore, relatedPersonModel, relatedPersonRecord,
-            templateRecord, oldTemplateRecord, currentInverse, templateInverse, loadedPersonGender;
+            templateRecord, oldTemplateRecord, currentInverse, templateInverse, loadedPersonGender, relationshipConfig, inverseRecord;
 
         gridView.clearInvalid(editedRecord);
 
@@ -283,9 +283,14 @@ Ext.define('SlateAdmin.controller.people.Contacts', {
                 ) &&
                 (templateInverse = templateRecord.getInverseLabel(loadedPersonGender))
             ) {
-                editedRecord.set('InverseRelationship', {
+                relationshipConfig = {
                     Label: templateInverse
-                });
+                };
+
+                if ((inverseRecord = editor.getStore().findRecord('label', templateInverse)) && inverseRecord.get('class')) {
+                    relationshipConfig.Class = inverseRecord.get('class');
+                }
+                editedRecord.set('InverseRelationship', relationshipConfig);
             } else {
                 // auto advance to inverse column if the editor isn't already active after a short delay
                 // this delay is necessary in case this completeEdit was already spawned by a startEdit on another field that's not finished yet
@@ -376,8 +381,18 @@ Ext.define('SlateAdmin.controller.people.Contacts', {
             fieldName = context.field,
             record = context.record,
             editor = context.column.getEditor(record),
+            activeEditor = editingPlugin.getActiveEditor(),
             labelEditor, valueEditor, labelStore, templateRecord, valueField, placeholder;
 
+        // allow editing multiple contact points
+        if (activeEditor && activeEditor != editor) {
+            Ext.defer(function() {
+                activeEditor.ignoreNoChange = false;
+                activeEditor.editing = true;
+                activeEditor.completeEdit();
+            }, 50);
+            return false;
+        }
         // get both components
         if (fieldName == 'Label') {
             labelEditor = editor;
