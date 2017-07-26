@@ -5,10 +5,11 @@ Ext.define('SlateAdmin.view.settings.NavPanel', {
 
     title: 'Settings',
     data: [
-        { href: '#settings/groups', text: 'Groups' },
-        { href: '#settings/terms', text: 'Terms' },
-        { href: '#settings/departments', text: 'Departments' },
-        { href: '#settings/courses', text: 'Courses' }
+        { href: '#settings/groups',         text: 'Groups' },
+        { href: '#settings/terms',          text: 'Terms' },
+        { href: '#settings/departments',    text: 'Departments' },
+        { href: '#settings/courses',        text: 'Courses' },
+        { href: '#settings/site',           text: 'Site'}
 //        { href: '#settings/locations', text: 'Locations' },
 //        { href: '#settings/asset-statuses', text: 'Asset Statuses' }
     ]
