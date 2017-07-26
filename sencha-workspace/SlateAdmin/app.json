@@ -47,6 +47,7 @@
     "requires": [
         "jarvus-hotfixes",
         "emergence-apikit",
+        "ext-ux-colorpick",
         "jarvus-ext-searchfield",
         "jarvus-ext-routing",
         "jarvus-lazydata",
