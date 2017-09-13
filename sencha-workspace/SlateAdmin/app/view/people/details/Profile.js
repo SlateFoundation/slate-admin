@@ -7,6 +7,7 @@ Ext.define('SlateAdmin.view.people.details.Profile', {
         'Ext.form.FieldSet',
         'Ext.form.FieldContainer',
         'Ext.form.field.Tag',
+        'Ext.form.field.Number',
         'SlateAdmin.proxy.Records',
         'SlateAdmin.model.person.Group'
     ],
@@ -103,6 +104,17 @@ Ext.define('SlateAdmin.view.people.details.Profile', {
                     text: 'Reissue',
                     glyph: 0xf084 // fa-key
                 }]
+            },{
+                xtype: 'fieldcontainer',
+                itemId: 'masqueradeBtnCt',
+                fieldLabel: 'Masquerading',
+                hidden: true,
+                items: [{
+                    xtype: 'button',
+                    action: 'masquerade',
+                    text: 'Log in as this user',
+                    glyph: 0xf090 // fa-sign-in
+                }]
             }]
         },{
             xtype: 'fieldset',
@@ -141,6 +153,12 @@ Ext.define('SlateAdmin.view.people.details.Profile', {
             items: [{
                 name: 'StudentNumber',
                 fieldLabel: 'Student #',
+                hidden: true
+            },{
+                xtype: 'numberfield',
+                name: 'GraduationYear',
+                fieldLabel: 'Graduation Year',
+                minValue: 1990,
                 hidden: true
             },{
                 xtype: 'tagfield',
