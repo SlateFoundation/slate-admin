@@ -6,6 +6,7 @@ Ext.define('SlateAdmin.controller.people.Profile', {
     requires: [
         'Ext.DomHelper',
         'Ext.window.MessageBox',
+        'Ext.data.StoreManager',
 
         /* global Slate */
         'Slate.API'
@@ -16,6 +17,11 @@ Ext.define('SlateAdmin.controller.people.Profile', {
     views: [
         'people.Manager',
         'people.details.Profile'
+    ],
+
+    stores: [
+        'people.Classes',
+        'people.Groups'
     ],
 
     refs: {
@@ -89,8 +95,6 @@ Ext.define('SlateAdmin.controller.people.Profile', {
     onPersonLoaded: function(profilePanel, person) {
         var me = this,
             profileForm = me.getProfileForm(),
-            groupsField = me.getGroupsField(),
-            groupsStore = groupsField.getStore(),
             siteEnv = window.SiteEnvironment || {},
             siteUserAccountLevel = siteEnv.user && siteEnv.user.AccountLevel,
             siteUserIsAdmin = siteUserAccountLevel == 'Administrator' || siteUserAccountLevel == 'Developer';
@@ -99,20 +103,12 @@ Ext.define('SlateAdmin.controller.people.Profile', {
         me.getUsernameField().setReadOnly(!siteUserIsAdmin);
         me.getMasqueradeBtnCt().setVisible(siteUserIsAdmin && person.get('Username'));
 
-        // ensure groups store is loaded before loading record because boxselect doesn't hande re-setting unknown values after local store load
-        if (groupsStore.isLoaded()) {
+        profilePanel.setLoading('Loading&hellip;');
+        Ext.StoreMgr.requireLoaded(['people.Classes', 'people.Groups'], function() {
             profileForm.loadRecord(person);
+            profilePanel.setLoading(false);
             me.syncButtons();
-        } else {
-            profilePanel.setLoading('Loading groups&hellip;');
-            groupsStore.load({
-                callback: function() {
-                    profileForm.loadRecord(person);
-                    profilePanel.setLoading(false);
-                    me.syncButtons();
-                }
-            });
-        }
+        });
     },
 
     onClassChange: function(combo, personClass) {
@@ -259,8 +255,25 @@ Ext.define('SlateAdmin.controller.people.Profile', {
         var person = this.getProfileForm().getRecord();
 
         Ext.Msg.confirm(
-            'Log in as user '+person.get('Username'),
-            '<p>Masquerading will switch you into this user&rsquo;s account, as if you had logged in as them. You will be logged out of your administrator session, and will need to manually log out of the user account and back into your administrator account to return. Consider doing this from an incognito browser window if you would like to maintain an administrative session in your normal browser window while masquerading as other users.</p><p>Clicking continue will immediately leave this screen and take you to the user&rsquo;s dashboard.</p>',
+            'Log in as user '+person.get('Username')+'?',
+            [
+                '<p>',
+                '   Masquerading will switch you into this user&rsquo;s account,',
+                '   as if you had logged in as them.',
+                '</p>',
+                '<p>',
+                '   You will be logged out of your administrator session, and will need',
+                '   to manually log out of the user&rsquo;s account and back into',
+                '   your administrator account when you are ready to return. Consider',
+                '   doing this from an incognito browser window if you would like to',
+                '   maintain an administrative session in your normal browser window',
+                '   while masquerading as other users.',
+                '</p>',
+                '<p>',
+                '   Clicking <strong>Yes</strong> will immediately leave this screen and take you',
+                '   to the website logged in as <strong>'+person.get('FullName')+'</strong>',
+                '</p>'
+            ].join(''),
             function(btnId) {
                 if (btnId != 'yes') {
                     return;

@@ -1,4 +1,3 @@
-/*jslint browser: true, undef: true *//*global Ext*/
 Ext.define('SlateAdmin.view.people.invitations.Window', {
     extend: 'Ext.Window',
     xtype: 'people-invitationswindow',
@@ -8,8 +7,8 @@ Ext.define('SlateAdmin.view.people.invitations.Window', {
 
     title: 'Review & Send Login Invitations',
     modal: true,
-    width: 700,
-    height: 600,
+    width: 800,
+    height: 700,
 
     layout: 'fit',
     items: [{
