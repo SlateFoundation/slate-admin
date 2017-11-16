@@ -54,6 +54,9 @@ Ext.define('SlateAdmin.controller.progress.terms.Print', {
         'progress-terms-print-container button[action=print-printout]': {
             click: 'onPrintPrintoutClick'
         },
+        'progress-terms-print-container button[action=open-tab]': {
+            click: 'onOpenTabClick'
+        },
         'progress-terms-print-container button[action=save-csv]': {
             click: 'onSaveCsvClick'
         },
@@ -102,8 +105,22 @@ Ext.define('SlateAdmin.controller.progress.terms.Print', {
 
     onPrintPrintoutClick: function() {
         this.loadPrintout(function(previewCmp) {
-            previewCmp.iframeEl.dom.contentWindow.print();
+            try {
+                previewCmp.iframeEl.dom.contentWindow.print();
+            } catch (err) {
+                Ext.Msg.alert(
+                    'Printing unavailable',
+                    [
+                        '<p>Your browser\'s print function could not be triggered automatically.</p>',
+                        '<p>Try using the <strong>Open in Browser Tab</strong> button instead and printing manually</p>'
+                    ].join('')
+                );
+            }
         });
+    },
+
+    onOpenTabClick: function() {
+        window.open(this.buildHtmlUrl());
     },
 
     onSaveCsvClick: function() {
@@ -173,14 +190,25 @@ Ext.define('SlateAdmin.controller.progress.terms.Print', {
         return filters;
     },
 
+    buildHtmlUrl: function() {
+        return Slate.API.buildUrl('/progress/section-term-reports?'+Ext.Object.toQueryString(this.buildFilters()));
+    },
+
     loadPrintout: function(callback) {
-        var printoutCmp = this.getPrintoutCmp();
+        var printoutCmp = this.getPrintoutCmp(),
+            url = this.buildHtmlUrl();
+
+        // skip load if URL is the same
+        if (printoutCmp.iframeEl.dom.src === url) {
+            Ext.callback(callback, null, [printoutCmp]);
+            return;
+        }
 
         if (callback) {
             printoutCmp.on('previewload', callback, null, { single: true });
         }
 
         printoutCmp.setLoading('Loading printout&hellip;');
-        printoutCmp.iframeEl.dom.src = Slate.API.buildUrl('/progress/section-term-reports?'+Ext.Object.toQueryString(this.buildFilters()));
+        printoutCmp.iframeEl.dom.src = url;
     }
 });

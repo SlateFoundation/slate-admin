@@ -91,13 +91,18 @@ Ext.define('SlateAdmin.view.progress.interims.print.Container', {
                 { xtype: 'tbfill' },
                 {
                     xtype: 'button',
-                    text: 'Load Report Printout',
+                    text: 'Preview Printout',
                     action: 'load-printout'
                 },
                 {
                     xtype: 'button',
                     text: 'Print via Browser',
                     action: 'print-printout'
+                },
+                {
+                    xtype: 'button',
+                    text: 'Open to Browser Tab',
+                    action: 'open-tab'
                 },
                 // {
                 //     xtype: 'button',
