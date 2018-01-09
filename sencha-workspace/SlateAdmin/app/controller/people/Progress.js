@@ -84,8 +84,14 @@ Ext.define('SlateAdmin.controller.people.Progress', {
         'people-details-progress button[action=composeNote]': {
             click: 'onComposeProgressNoteClick'
         },
+        'people-details-progress-note-recipientgrid': {
+            beforeselect: 'onRecipientsGridBeforeSelect',
+            select: 'onRecipientsGridSelect',
+            deselect: 'onRecipientsGridDeselect'
+        },
         'people-details-progress-note-recipientgrid #customRecipientPersonCombo': {
-            select: 'onCustomRecipientPersonSelect'
+            change: 'onCustomRecipientPersonChange',
+            blur: 'onCustomRecipientPersonBlur'
         },
         'people-details-progress-note-recipientgrid button[action=addRecepient]': {
             click: 'onAddProgressNoteRecipient'
@@ -149,8 +155,74 @@ Ext.define('SlateAdmin.controller.people.Progress', {
         });
     },
 
-    onCustomRecipientPersonSelect: function (combo, record) {
-        combo.nextSibling('textfield[name=Email]').setValue(record.get('Email'));
+    onRecipientsGridBeforeSelect: function(selModel, selectedRecord) {
+        var personId = selectedRecord.get('PersonID'),
+            fullName = selectedRecord.get('FullName');
+
+        if (selectedRecord.get('Email')) {
+            return true;
+        }
+
+        if (this.lastRecipientWarning != personId) {
+            this.lastRecipientWarning = personId;
+            Ext.Msg.alert(
+                'Cannot select '+fullName,
+                fullName+' cannot be selected as a recipient because they do not have any email address on file. Update their contact details before adding them as a recipient.'
+            );
+        }
+
+        return false;
+    },
+
+    onRecipientsGridSelect: function(selModel, selectedRecord) {
+        var personId = selectedRecord.get('PersonID');
+
+        selModel.select(
+            this.getPeopleProgressNoteRecipientsStore().queryBy(function(record) {
+                return record !== selectedRecord && record.get('PersonID') === personId;
+            }).getRange(),
+            true // true to keep existing selection
+        );
+    },
+
+    onRecipientsGridDeselect: function(selModel, deselectedRecord) {
+        var personId = deselectedRecord.get('PersonID');
+
+        selModel.deselect(
+            this.getPeopleProgressNoteRecipientsStore().queryBy(function(record) {
+                return record !== deselectedRecord && record.get('PersonID') === personId;
+            }).getRange()
+        );
+    },
+
+    onCustomRecipientPersonChange: function (combo, value, oldValue) {
+        var record = combo.getSelectedRecord(),
+            btn = combo.nextSibling('button'),
+            picker = combo.getPicker(),
+            navModel = picker.getNavigationModel(),
+            matchPosition;
+
+        if (!oldValue || record || typeof oldValue == 'number') {
+            combo.nextSibling('textfield[name=Email]').setValue(record ? record.get('Email') : null);
+        }
+
+        if (typeof value == 'string') {
+            matchPosition = combo.getStore().findExact('FullName', value);
+
+            if (matchPosition == -1) {
+                navModel.setPosition(null);
+                picker.clearHighlight();
+            } else {
+                navModel.setPosition(matchPosition);
+            }
+        }
+
+        btn.setText(record ? 'Add known person' : 'Create new person and add');
+        btn.enable();
+    },
+
+    onCustomRecipientPersonBlur: function (combo) {
+        combo.checkChange();
     },
 
     onAddProgressNoteRecipient: function (btn) {
@@ -158,65 +230,26 @@ Ext.define('SlateAdmin.controller.people.Progress', {
             menu = btn.up('menu'),
             personField = menu.down('combo[name="Person"]'),
             emailField = menu.down('textfield[name="Email"]'),
-            relationshipField = menu.down('textfield[name="Label"]'),
-            person = me.getPeopleManager().getSelectedPerson(),
-            values = {
-                Person: personField.getValue(),
-                Label: relationshipField.getValue(),
-                Email: emailField.getValue(),
-                StudentID: person.getId()
-            },
+            person = personField.getSelectedRecord(),
+            student = me.getPeopleManager().getSelectedPerson(),
             recipientGrid = me.getProgressNoteRecipientGrid(),
-            recipientsStore = me.getPeopleProgressNoteRecipientsStore();
-
+            recipientsStore = me.getPeopleProgressNoteRecipientsStore(),
+            recipientData = {
+                FullName: personField.getValue(),
+                Email: emailField.getValue(),
+                StudentID: student.getId()
+            };
 
         if (personField.isValid() && emailField.isValid()) {
-            recipientGrid.setLoading('Attempting to add custom recipient &hellip;');
+            if (person) {
+                recipientData.PersonID = person.getId();
+            }
 
-            SlateAdmin.API.request({
-                url: '/notes/addCustomRecipient',
-                params: values,
-                success: function (res) {
-                    var r = Ext.decode(res.responseText),
-                        record;
+            recipientGrid.getSelectionModel().select(recipientsStore.add(recipientData), true);
 
-                    if (r.success) {
-                        record = recipientsStore.add(r.data);
-
-                        recipientsStore.sort({
-                            sorterFn: function (p1, p2) {
-                                if (p1.get('RelationshipGroup') != 'Other' && p2.get('RelationshipGroup') != 'Other') {
-                                    return 0;
-                                }
-
-                                if (p1.get('RelationshipGroup') != 'Other') {
-                                    return 1;
-                                }
-
-                                if (p2.get('RelationshipGroup') != 'Other') {
-                                    return -1;
-                                }
-
-                                return -1;
-                            }
-                        });
-
-                        recipientGrid.getSelectionModel().select(record, true);
-
-                        menu.hide();
-                        personField.reset();
-                        emailField.reset();
-                        relationshipField.reset();
-                    } else {
-                        Ext.Msg.alert('Failure adding recipient', r.message);
-                    }
-
-                    recipientGrid.setLoading(false);
-                },
-                failure: function () {
-                    recipientGrid.setLoading(false);
-                }
-            });
+            menu.hide();
+            personField.reset();
+            emailField.reset();
         }
     },
 
@@ -410,16 +443,32 @@ Ext.define('SlateAdmin.controller.people.Progress', {
         var me = this,
             editorWindow = me.getProgressNoteEditorWindow();
 
+        // index by PersonID to eliminate duplicates
+        recipients = Ext.Array.toValueMap(recipients, function(recipient) {
+            return recipient.get('PersonID') || recipient.get('Email');
+        });
+
+        // map to recipient records
+        recipients = Ext.Object.getValues(recipients).map(function(r) {
+            var personId = r.get('PersonID'),
+                recipientData = {
+                    Email: r.get('Email')
+                };
+
+            if (personId) {
+                recipientData.PersonID = personId;
+            } else {
+                recipientData.FullName = r.get('FullName');
+            }
+
+            return recipientData;
+        });
+
         SlateAdmin.API.request({
             url: '/notes/' + record.get('ID') + '/recipients',
             method: 'POST',
             jsonData: {
-                data: recipients.map(function(r) {
-                    return {
-                        PersonID: r.get('PersonID'),
-                        Email: r.get('Email')
-                    };
-                })
+                data: recipients
             },
             success: function (response) {
                 editorWindow.setLoading(false);
