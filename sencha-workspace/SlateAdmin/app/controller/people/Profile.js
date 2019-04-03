@@ -21,7 +21,8 @@ Ext.define('SlateAdmin.controller.people.Profile', {
 
     stores: [
         'people.Classes',
-        'people.Groups'
+        'people.Groups',
+        'people.Advisors@Slate.store',
     ],
 
     refs: {
@@ -104,7 +105,12 @@ Ext.define('SlateAdmin.controller.people.Profile', {
         me.getMasqueradeBtnCt().setVisible(siteUserIsAdmin && person.get('Username'));
 
         profilePanel.setLoading('Loading&hellip;');
-        Ext.StoreMgr.requireLoaded(['people.Classes', 'people.Groups'], function() {
+        Ext.StoreMgr.requireLoaded([
+            'people.Classes',
+            'people.Groups',
+            'people.AccountLevels',
+            'people.Advisors'
+        ], function() {
             profileForm.loadRecord(person);
             profilePanel.setLoading(false);
             me.syncButtons();
